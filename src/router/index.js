@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/views/Home';
-import Register from '@/components/Register.vue';
-import Login from '@/components/Login.vue';
+import Register from '@/views/Register.vue';
+import Login from '@/views/Login.vue';
 import E404 from '@/components/E404.vue';
 import QuizEditPage from '@/views/QuizEditPage.vue';
 import PersonalQuizzes from '@/views/PersonalQuizzes.vue';

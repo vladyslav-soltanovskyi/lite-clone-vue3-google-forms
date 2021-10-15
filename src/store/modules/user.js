@@ -4,7 +4,8 @@ import router from "@/router";
 export default {
     namespaced: true,
     state: {
-        user: null
+        user: null,
+        errors: null
     },
     mutations: {
         SESSION_SET(state, response) {
@@ -20,6 +21,9 @@ export default {
         },
         setUser(state, user) {
             state.user = user;
+        },
+        setErrors(state, errors) {
+            state.errors = errors;
         }
     },
     actions: {
@@ -36,11 +40,17 @@ export default {
         async login({ commit }, credentials) {
             try {
                 const response = await axios.post("/api/login", credentials);
-                commit("SESSION_SET", response.data);
-                router.push({ path: '/'});
+                if(response.data.status) {
+                    commit("SESSION_SET", response.data);
+                    commit('setErrors', null);
+                    router.push({ path: '/'});
+                }
+                else {
+                    commit('setErrors', response.data.errors);
+                }
 
               } catch (error) {
-                console.error(error);
+                console.log(error);
             }
         },
         async refresh({ commit }) {
@@ -49,7 +59,7 @@ export default {
                 commit("SESSION_SET", response.data);
 
               } catch (error) {
-                console.error(error);
+                console.dir(error);
             }
         },
         async edit({ commit }, user) {
@@ -70,6 +80,9 @@ export default {
         },
         user(state) {
             return state.user;
+        },
+        errors(state) {
+            return state.errors;
         }
     }
 };

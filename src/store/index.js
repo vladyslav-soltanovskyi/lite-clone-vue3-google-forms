@@ -7,8 +7,6 @@ import quizzes from './modules//quizzes';
 import responses from './modules/responses';
 import response from './modules/response';
 import currentBlock from './modules/currentBlock';
-// import products from './modules/products';
-// import cart from './modules/cart';
 
 export default createStore({
 	modules: {

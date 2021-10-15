@@ -10,13 +10,17 @@
                             <InputForAuth :value="user.username"
                                         :name="'username'"
                                         :title="'Username'"
-                                        @changeValue="changeValue"/>
+                                        @changeValue="changeValue"
+                                        :error-messages="v$.$error ? nameErrors : []"
+                                        />
                         </div>
                         <div class="form-group">
                             <InputForAuth :value="user.email"
                                         :name="'email'"
                                         :title="'Email'"
-                                        @changeValue="changeValue"/>
+                                        @changeValue="changeValue"
+                                        :error-messages="v$.$error ? emailErrors : []"
+                                        />
                         </div>
                         <div class="form_group_passwords">
                             <div class="form_item">
@@ -24,14 +28,17 @@
                                             :type="'password'"
                                             :name="'password'"
                                             :title="'Password'"
-                                            @changeValue="changeValue"/>
+                                            @changeValue="changeValue"
+                                            :error-messages="v$.$error ? passwordErrors : []"
+                                            />
                             </div>
                             <div class="form_item">
                                 <InputForAuth :value="user.password_confirm"
                                             :title="'Confirm'"
                                             :type="'password'"
                                             :name="'password_confirm'"
-                                        @changeValue="changeValue"/>
+                                            :error-messages="v$.$error ? passwordRepeatErrors : []"
+                                            @changeValue="changeValue"/>
                             </div>
                         </div>
                         <div class="form-footer">
@@ -166,11 +173,14 @@
 </template>
 
 <script>
-import InputForAuth from './InputForAuth.vue';
-import { mapActions } from 'vuex';
+import InputForAuth from '@/components/InputForAuth.vue';
+import useVuelidate from '@vuelidate/core';
+import { required, minLength, sameAs, email } from '@vuelidate/validators';
+import { hasUppercase, hasLowercase, hasSpecialChars } from '@/functions/validators';
 
 export default {
     data: () => ({
+        v$: useVuelidate(),
         user: {
             username: '',
             email: '',
@@ -178,13 +188,77 @@ export default {
             password_confirm: ''
         }
     }),
+    validations() {
+        return {
+            user: {
+                email: {
+                    required,
+                    email
+                },
+                password: {
+                    required,
+                    hasLowercase,
+                    hasUppercase,
+                    hasSpecialChars,
+                    sameAs: sameAs(this.user.password_confirm)
+                },
+                password_confirm: {
+                    required,
+                    hasLowercase,
+                    hasUppercase,
+                    hasSpecialChars,
+                    sameAs: sameAs(this.user.password)
+                },
+                username: {
+                    required,
+                    minLength: minLength(2)
+                },
+            }
+        }
+    },
     methods: {
         changeValue({ value, name }) {
             this.user[name] = value;
         },
-        ...mapActions('user', [
-            'register' 
-        ])
+        register() {
+            this.v$.$touch();
+
+            if (!this.v$.$invalid) {
+                this.$store.dispatch('user/register', this.user);
+            }
+        }
+    },
+    computed: {
+        emailErrors() {
+            const errors = [];
+            if (this.v$.user.email.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.v$.user.email.email.$invalid) errors.push('Невалидный email.')
+            return errors;
+        },
+        passwordErrors() {
+            const errors = [];
+            if (this.v$.user.password.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.v$.user.password.hasUppercase.$invalid) errors.push('Должен содержать буквы в верхнем регистре.')
+            else if (this.v$.user.password.hasLowercase.$invalid) errors.push('Должен содержать буквы в нижнем регистре.')
+            else if (this.v$.user.password.hasSpecialChars.$invalid) errors.push('Должен содержать спецсимволы ($%#@).')
+            else if (this.v$.user.password.sameAs.$invalid) errors.push('Пароли не совпадают.')
+            return errors;
+        },
+        nameErrors() {
+            const errors = [];
+            if (this.v$.user.username.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.v$.user.username.minLength.$invalid) errors.push('Не меньше двух знаков.')
+            return errors;
+        },
+        passwordRepeatErrors() {
+            const errors = [];
+            if (this.v$.user.password_confirm.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.v$.user.password_confirm.hasUppercase.$invalid) errors.push('Должен содержать буквы в верхнем регистре.')
+            else if (this.v$.user.password_confirm.hasLowercase.$invalid) errors.push('Должен содержать буквы в нижнем регистре.')
+            else if (this.v$.user.password_confirm.hasSpecialChars.$invalid) errors.push('Должен содержать спецсимволы ($%#@).')
+            else if (this.v$.user.password.sameAs.$invalid) errors.push('Пароли не совпадают.')
+            return errors;
+        },
     },
     components: { InputForAuth }
 }

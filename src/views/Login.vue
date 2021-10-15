@@ -7,17 +7,22 @@
                         <h2>VueForms</h2>
                         <label class="description">Create your VueForms account</label>
                         <div class="form-group">
-                            <InputForAuth :value="user.email"
+                            <InputForAuth
+                                            :value="user.email"
                                             :name="'email'"
                                             :title="'Email'"
-                                            @changeValue="changeValue"/>
+                                            @changeValue="changeValue"
+                                            :error-messages="v$.$error ? emailErrors : emailError ? emailError : []"
+                                            />
                         </div>
                         <div class="form-group">
-                            <InputForAuth :value="user.password"
+                            <InputForAuth
+                                            :value="user.password"
                                             :name="'password'"
                                             :type="'password'"
                                             :title="'Password'"
-                                            @changeValue="changeValue"/>
+                                            @changeValue="changeValue"
+                                            :error-messages="v$.$error ? passwordErrors : passwordError ? passwordError : []"/>
                         </div>
                         <div class="form-footer">
                             <p class="signup"><router-link to="/register">Create Account</router-link></p>
@@ -31,23 +36,69 @@
 </template>
 
 <script>
-import InputForAuth from './InputForAuth.vue';
-import { mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
+import InputForAuth from '@/components/InputForAuth.vue';
+import useVuelidate from '@vuelidate/core';
+import { required, email } from '@vuelidate/validators';
 
 export default {
     data: () => ({
+        v$: useVuelidate(),
         user: {
             email: '',
             password: ''
         },
     }),
+    validations() {
+        return {
+            user: {
+                email: {
+                    required,
+                    email,
+                },
+                password: {
+                    required,
+                },
+            }
+        }
+    },
     methods: {
         changeValue({ value, name }) {
             this.user[name] = value;
         },
-        ...mapActions('user', [
-            'login' 
-        ])
+        async login() {
+            let isFormCorrect =  await this.v$.$validate();
+
+            if (isFormCorrect) {
+                this.$store.dispatch('user/login', this.user);
+            }
+        }
+    },
+    computed: {
+        ...mapGetters('user', ['errors']),
+        emailErrors() {
+            const errors = [];
+            if (this.v$.user.email.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.v$.user.email.email.$invalid) errors.push('Невалидный email.')
+            else if (this.errors && this.errors.email) errors.push(this.errors.email)
+            return errors;
+        },
+        passwordErrors() {
+            const errors = [];
+            if (this.v$.user.password.required.$invalid) errors.push('Обязательно для заполнения.')
+            else if (this.errors && this.errors.password) errors.push(this.errors.password)
+            return errors;
+        },
+        emailError() {
+            const errors = [];
+            if (this.errors && this.errors.email) errors.push(this.errors.email)
+            return errors;
+        },
+        passwordError() {
+            const errors = [];
+            if (this.errors && this.errors.password) errors.push(this.errors.password)
+            return errors;
+        }
     },
     components: { InputForAuth }
 }
@@ -67,33 +118,24 @@ section {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
     transition: all 0.5s;
 }
 
 .container {
     position: relative;
-    width: 400px;
-    height: 400px;
     background: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid #e0e1e4;
     border-radius: 5px;
-    overflow: hidden;
 }
 
 .container .user {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
     display: flex;
 }
 
 .container .user .formBx {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 400px;
+    height: 400px;
     background: #fff;
     display: flex;
     justify-content: center;

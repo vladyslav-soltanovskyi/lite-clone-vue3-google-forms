@@ -1,19 +1,26 @@
 <template>
     <div class="form_group">
-        <input class="form_input" 
-               :type="changeTypeInput"
-               placeholder=" "
-               :value="value"
-               @input="changeValue"
-               ref="input">
-        <label class="form_label" @click="focusInput">{{ title }}</label>
-        <i class="fas eye"
-            v-if="type === 'password'"
-            :class="changeClassEye"
-            @click="toggleHide"></i>
-        <!-- <label>
-            <input :type="changeTypeInput" :placeholder="title" :value="value" @input="changeValue">
-        </label> -->
+        <div class="container-form">
+            <input class="form_input" 
+                :type="changeTypeInput"
+                placeholder=" "
+                :value="value"
+                @input="changeValue"
+                ref="input"
+                :class="isInvalide"
+                >
+            <label 
+                class="form_label"
+                :class="isInvalide"
+                @click="focusInput">{{ title }}</label>
+            <i class="fas eye"
+                v-if="type === 'password'"
+                :class="changeClassEye"
+                @click="toggleHide"></i>
+        </div>
+        <div class="errors" v-if="errorMessages">
+            <p class="error-info" v-for="(error, index) in errorMessages" :key="index"><i class="fas fa-times-circle"></i> {{ error }}</p>
+        </div>
     </div>
 </template>
 
@@ -31,6 +38,12 @@ export default {
         },
         name: {
             default: ''
+        },
+        errorMessages: {
+            type: Array,
+            default() {
+                return [];
+            }
         }
     },
     data: () => ({
@@ -42,11 +55,13 @@ export default {
         },
         changeClassEye() {
             return !(this.isHide) ? 'fa-eye' : 'fa-eye-slash';
+        },
+        isInvalide() {
+            return { error: this.errorMessages.length };
         }
     },
     methods: {
         toggleHide() {
-            console.log(this.isHide);
             this.isHide = !this.isHide;
         },
         changeValue(event) {
@@ -64,6 +79,10 @@ export default {
 
 <style scoped>
 .form_group {
+    position: relative;
+}
+
+.container-form {
     position: relative;
 }
 
@@ -119,6 +138,10 @@ export default {
     border: 1px solid #1a73e8;
 }
 
+.form_input.error {
+    border: 1px solid #d93025;
+}
+
 .form_button {
     padding: 10px 22px;
     background: #0071f0;
@@ -129,6 +152,13 @@ export default {
     transition: 0.15s all;
     position: relative;
     overflow: hidden;
+}
+
+.error-info {
+    font-size: 12px;
+    color: #d93025;
+    padding: 0;
+    margin: 5px 0;
 }
 
 .form_input:focus~.form_label,
@@ -147,5 +177,9 @@ export default {
 .form_label:hover~.eye {
     opacity: 1;
     visibility: visible;
+}
+
+.form_label.error { 
+    color: #d93025 !important;
 }
 </style>
